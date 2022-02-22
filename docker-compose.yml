@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 services:
   ctfd:
@@ -20,11 +20,14 @@ services:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
       - .:/opt/CTFd:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - db
+      - frpc
     networks:
         default:
         internal:
+        frp:
 
   nginx:
     image: nginx:1.17
@@ -32,7 +35,7 @@ services:
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf
     ports:
-      - 80:80
+      - 8001:80
     depends_on:
       - ctfd
 
@@ -58,8 +61,53 @@ services:
     - .data/redis:/data
     networks:
         internal:
+  
+  frpc:
+    image: glzjin/frp:latest
+    restart: always
+    volumes:
+      - ./frp:/conf/
+    depends_on:
+      - frps
+    entrypoint:
+        - /usr/local/bin/frpc
+        - -c
+        - /conf/frpc.ini
+    networks:
+        frp:
+            ipv4_address: 172.1.0.3
+        frp_containers:
+
+  frps:
+    image: glzjin/frp:latest
+    restart: always
+    volumes:
+      - ./frp:/conf/
+    entrypoint:
+        - /usr/local/bin/frps
+        - -c
+        - /conf/frps.ini
+   # network_mode: host
+    ports:
+     - "28000-28100:28000-28100"
+     - "6490:6490"
+     - "88:88"
+    networks: 
+         default:
+         frp:
 
 networks:
     default:
     internal:
         internal: true
+    frp:
+        driver: overlay
+        ipam:
+            config:
+                - subnet: 172.1.0.0/16
+    frp_containers:
+        driver: overlay
+        internal: false
+        ipam:
+            config:
+                - subnet: 172.2.0.0/16
