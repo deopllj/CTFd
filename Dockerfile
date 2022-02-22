@@ -1,7 +1,8 @@
 FROM python:3.7-slim-buster
 WORKDIR /opt/CTFd
 RUN mkdir -p /opt/CTFd /var/log/CTFd /var/uploads
-
+RUN cd /etc/apt && \
+      sed -i "s/deb.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -15,7 +16,8 @@ RUN apt-get update \
 
 COPY requirements.txt /opt/CTFd/
 
-RUN pip install -r requirements.txt --no-cache-dir
+
+RUN pip install -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com -r requirements.txt --no-cache-dir
 
 COPY . /opt/CTFd
 
