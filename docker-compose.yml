@@ -35,7 +35,7 @@ services:
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf
     ports:
-      - 8001:80
+      - 80:80
     depends_on:
       - ctfd
 
@@ -95,6 +95,7 @@ services:
     networks: 
          default:
          frp:
+             ipv4_address: 172.1.0.5
 
 networks:
     default:
